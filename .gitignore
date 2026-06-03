@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+# HF model cache lives outside the repo (~/.cache/huggingface); never commit weights
+*.safetensors

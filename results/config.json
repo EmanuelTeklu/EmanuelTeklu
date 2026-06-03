@@ -1,0 +1,67 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "synthetic": false,
+  "max_tokens": 4096,
+  "seed": 0,
+  "block": 32,
+  "python": "3.11.15",
+  "platform": "Linux-6.18.5-x86_64-with-glibc2.39",
+  "torch": "2.12.0+cpu",
+  "transformers": "5.9.0",
+  "capture_seconds": 84.3,
+  "verify": [
+    {
+      "name": "short_qa",
+      "T": 44,
+      "rel_err": 3.659188510894546e-07,
+      "ok": true
+    },
+    {
+      "name": "short_chat",
+      "T": 43,
+      "rel_err": 1.6619790179531632e-07,
+      "ok": true
+    },
+    {
+      "name": "longdoc_qa",
+      "T": 3068,
+      "rel_err": 4.372321635184961e-07,
+      "ok": true
+    },
+    {
+      "name": "needle",
+      "T": 2130,
+      "rel_err": 4.115204061112603e-07,
+      "ok": true
+    },
+    {
+      "name": "needle_late",
+      "T": 3226,
+      "rel_err": 3.899194494600901e-07,
+      "ok": true
+    },
+    {
+      "name": "agent_prefix",
+      "T": 857,
+      "rel_err": 2.471227055508796e-07,
+      "ok": true
+    },
+    {
+      "name": "code_retrieval",
+      "T": 161,
+      "rel_err": 4.01673751210921e-07,
+      "ok": true
+    }
+  ],
+  "context_lengths": {
+    "short_qa": 44,
+    "short_chat": 43,
+    "longdoc_qa": 3068,
+    "needle": 2130,
+    "needle_late": 3226,
+    "agent_prefix": 857,
+    "code_retrieval": 161
+  },
+  "max_context_tested": 3226,
+  "n_cases": 2352
+}

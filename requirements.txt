@@ -1,0 +1,13 @@
+# Inference-quotient sparse/residual/quant benchmark
+# CPU-only install of torch works fine; CUDA wheel optional if a GPU is present.
+torch>=2.2          # pip install torch --index-url https://download.pytorch.org/whl/cpu
+transformers>=4.44  # tested on 5.9.0
+tokenizers
+safetensors
+accelerate
+numpy
+pandas
+scipy
+matplotlib          # optional, only for plots
+tqdm
+tabulate            # for markdown tables in report.py
