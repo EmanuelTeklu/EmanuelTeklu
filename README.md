@@ -26,6 +26,24 @@ explicit **keep / kill / park** decisions.
 
 Full numbers, tables, and decisions: [`results/FINAL_REPORT.md`](results/FINAL_REPORT.md).
 
+### Follow-up: selective sparse-safe classifier — **KEEP**
+
+Universal routing was only PARK, so the next question was: *can we predict which
+heads/queries are sparse-safe and route only those?* Yes.
+
+| Test | Result |
+|---|---|
+| Beats simple entropy/top-mass thresholding? | **Yes, decisively** — single-feature thresholds reach **~0% coverage at 95% precision** (AUC≈0.69); the classifier reaches **40%** (random) / **32%** (held-out regime) on cheap features |
+| Precision/coverage (cheap, deployable features) | 95% precision at **40%/32%/38%/26%** coverage (random / held-out regime / head / layer) |
+| Long-context KV read reduction (held-out regime) | **~2.0× (cheap), ~2.9× (oracle-feature)** at ≤5% routed failure |
+| Transfer to needle / longdoc / length-shift | holds, **2.5–4.2×** read reduction |
+| Transfer to agent / repeated-prefix | **weak** (precision–coverage tradeoff degrades) |
+
+Verdict **KEEP** (not STRONG KEEP): meets ≥95% precision, ≥30% held-out-regime
+coverage, ≥2× long-context read reduction, and crushes thresholding baselines —
+but cheap-feature coverage is <50% and the agent regime transfers poorly. Full
+detail: [`results/CLASSIFIER_REPORT.md`](results/CLASSIFIER_REPORT.md).
+
 **Bottom line on the thesis.** The *opportunity* is real and large (10–100×
 component read reduction lives in long-context heads). The gap is a cheap,
 robust selector that survives diffuse heads. Next move is **not** a GPU kernel
@@ -67,6 +85,18 @@ analysis itself is NumPy on CPU.
 | G: per-head/layer predictor correlations | `report.py` | `tables/predictor_correlations.csv` |
 | H/I: prefix-reuse + Amdahl analytic cost models | `economics.py` | `tables/prefix_cache.csv`, `tables/amdahl.csv` |
 | Report + plots + keep/kill/park | `report.py` | `results/FINAL_REPORT.md`, `results/plots/*.png` |
+| Sparse-safe supervised dataset (features + labels) | `build_dataset.py` | `tables/classifier_dataset.csv` |
+| Selective sparse classifier + policy (LR/tree/RF/GBM/MLP, grouped splits, transfer) | `classifier.py` | `tables/classifier_*.csv`, `tables/selective_*.csv`, `results/CLASSIFIER_REPORT.md` |
+| GPU scale-up prep (config + exact commands, no heavy run) | `scale_up_prep.py` | `results/scale_up_config.json` |
+
+Reproduce the classifier branch:
+
+```bash
+cd src
+python build_dataset.py     # re-captures Q/K/V, writes the supervised dataset
+python classifier.py        # trains, evaluates, writes results/CLASSIFIER_REPORT.md
+python scale_up_prep.py --check   # prints exact 1.5B/3B @ 8k-32k commands
+```
 
 ## Method notes / honesty
 

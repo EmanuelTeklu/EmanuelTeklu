@@ -350,7 +350,16 @@ def build_report():
           f"(IQR {oh['p25_read_gain']:.1f}×–{oh['p75_read_gain']:.1f}×); "
           f"{100*oh['frac_cases_reach_mod']:.0f}% of cases reach moderate pass at some S≤256.")
     A(f"- **Non-oracle routing (the load-bearing test):** {router_best_desc}. "
-      f"Cheap routers recover the oracle gain only *partially*.")
+      f"Cheap routers recover the oracle gain only *partially* — which motivated "
+      f"the follow-up below.")
+    if os.path.exists(os.path.join(RESULTS, "CLASSIFIER_REPORT.md")):
+        A(f"- **➡️ Follow-up — selective sparse classifier (KEEP):** instead of "
+          f"routing universally, a classifier predicts *which* heads/queries are "
+          f"sparse-safe from cheap features and falls back to full attention "
+          f"otherwise. At a 95%-precision operating point it covers ~32% of cases "
+          f"under held-out regimes (vs ~0% for entropy/top-mass thresholding) and "
+          f"yields ~2× (cheap) – ~2.9× (oracle-feature) KV read reduction on "
+          f"long-context workloads. See **`CLASSIFIER_REPORT.md`**.")
     A(f"- **Residual correction:** cheap block-residual "
       f"{'cuts aggressive-budget sparse error (e.g. budget=8: ratio %.2f vs sparse)' % cbr.get(8, float('nan')) if resid_helps_aggressive else 'does NOT help'}; "
       f"it {'can HURT once the budget already captures most mass (budget=32)' if resid_hurts_somewhere else 'is monotone'}. "
@@ -571,11 +580,16 @@ def build_report():
 
     A("## 13. Next experiment")
     A("")
-    A("1. Repeat oracle+router on a 1.5B model and at 8k–32k context (GPU) to confirm "
-      "the read-gain scales with context (it should grow ~linearly with T).")
-    A("2. Build the **per-head compress/skip classifier** from §8 predictors and "
-      "measure realized error when applied head-selectively.")
-    A("3. If routing stays PARK, pivot the kernel effort to **prefix/latent KV reuse** "
+    A("1. ✅ **DONE — selective sparse-safe classifier** (see `CLASSIFIER_REPORT.md`): "
+      "verdict KEEP. Cheap features predict router-safety at 95% precision / ~32% "
+      "coverage under held-out regimes, beating entropy/top-mass thresholding "
+      "(~0% coverage), for ~2× long-context KV read reduction.")
+    A("2. Repeat oracle+router+classifier on a 1.5B/3B model at 8k–32k context (GPU) "
+      "to confirm the safe base-rate and coverage rise with context. A no-heavy-run "
+      "prep script + exact commands are in `src/scale_up_prep.py` "
+      "(`python scale_up_prep.py --check`).")
+    A("3. If routing stays PARK on cheap features, pivot the kernel effort to "
+      "**prefix/latent KV reuse** "
       "(§9) where the economics, not the attention structure, carry the 10×.")
     A("")
 

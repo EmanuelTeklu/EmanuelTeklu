@@ -7,7 +7,8 @@
 - **Model:** `Qwen/Qwen2.5-0.5B-Instruct` (24 layers, 14 query / 2 KV heads, GQA-7, head_dim 64) · 7 prompts across 5 regimes · max context tested: **3226** tokens · cases analyzed: **2352** (layer×head×prompt, decode last-token).
 - **Capture validated:** exact-attention reconstruction matches the model's own attention output to ~1e-6 rel error (GQA mapping verified).
 - **Oracle sparse (upper bound, long-context):** median case reaches rel-L2≤0.10 at read ratio **0.008** → **133.1× component read reduction** (IQR 47.9×–383.5×); 93% of cases reach moderate pass at some S≤256.
-- **Non-oracle routing (the load-bearing test):** sink_recent_router reads 7.7% of tokens to reach median rel-L2≤0.10, but only 67% of heads pass; peak oracle-support recovery 69% (<70% bar). Cheap routers recover the oracle gain only *partially*.
+- **Non-oracle routing (the load-bearing test):** sink_recent_router reads 7.7% of tokens to reach median rel-L2≤0.10, but only 67% of heads pass; peak oracle-support recovery 69% (<70% bar). Cheap routers recover the oracle gain only *partially* — which motivated the follow-up below.
+- **➡️ Follow-up — selective sparse classifier (KEEP):** instead of routing universally, a classifier predicts *which* heads/queries are sparse-safe from cheap features and falls back to full attention otherwise. At a 95%-precision operating point it covers ~32% of cases under held-out regimes (vs ~0% for entropy/top-mass thresholding) and yields ~2× (cheap) – ~2.9× (oracle-feature) KV read reduction on long-context workloads. See **`CLASSIFIER_REPORT.md`**.
 - **Residual correction:** cheap block-residual cuts aggressive-budget sparse error (e.g. budget=8: ratio 0.61 vs sparse); it can HURT once the budget already captures most mass (budget=32). Oracle-mass ceiling shows ~54% error reduction is *available* if omitted mass were estimated well.
 - **Margin/importance-aware quant vs uniform 4-bit:** uniform-4-bit is NOT strictly dominated, but importance-aware bit allocation (8-bit on top-mass tokens, 4-bit rest) reaches ~uniform-8-bit quality (~0.03 rel-L2) at ~4.4–5 effective bits — a real quality-per-bit win in the 4.5–6 bit band. It does NOT beat 4-bit *storage*, and uses an ORACLE importance signal (see §7).
 
@@ -316,9 +317,9 @@ Component reduction → end-to-end speedup. 10× end-to-end needs the component 
 
 ## 13. Next experiment
 
-1. Repeat oracle+router on a 1.5B model and at 8k–32k context (GPU) to confirm the read-gain scales with context (it should grow ~linearly with T).
-2. Build the **per-head compress/skip classifier** from §8 predictors and measure realized error when applied head-selectively.
-3. If routing stays PARK, pivot the kernel effort to **prefix/latent KV reuse** (§9) where the economics, not the attention structure, carry the 10×.
+1. ✅ **DONE — selective sparse-safe classifier** (see `CLASSIFIER_REPORT.md`): verdict KEEP. Cheap features predict router-safety at 95% precision / ~32% coverage under held-out regimes, beating entropy/top-mass thresholding (~0% coverage), for ~2× long-context KV read reduction.
+2. Repeat oracle+router+classifier on a 1.5B/3B model at 8k–32k context (GPU) to confirm the safe base-rate and coverage rise with context. A no-heavy-run prep script + exact commands are in `src/scale_up_prep.py` (`python scale_up_prep.py --check`).
+3. If routing stays PARK on cheap features, pivot the kernel effort to **prefix/latent KV reuse** (§9) where the economics, not the attention structure, carry the 10×.
 
 ## 14. Fundability implication
 

@@ -1,0 +1,52 @@
+{
+  "cheap_features": [
+    "log_T",
+    "q_norm",
+    "k_norm_mean",
+    "k_norm_std",
+    "k_norm_max",
+    "v_norm_mean",
+    "v_norm_std",
+    "v_norm_max",
+    "value_spectral",
+    "cent_top1",
+    "cent_margin12",
+    "cent_entropy",
+    "cent_top_block_mass",
+    "cent_recent_frac",
+    "qk_align_max"
+  ],
+  "oracle_features": [
+    "entropy",
+    "gini",
+    "mass_top8",
+    "mass_top16",
+    "mass_top32",
+    "margin_top8",
+    "margin_top16",
+    "sink_mass",
+    "recent_mass"
+  ],
+  "id_features": [
+    "layer",
+    "head"
+  ],
+  "read_ratios": [
+    0.01,
+    0.02,
+    0.05,
+    0.1,
+    0.15,
+    0.25
+  ],
+  "thresholds": [
+    0.05,
+    0.1,
+    0.2
+  ],
+  "n_rows": 2352,
+  "block": 32,
+  "recent": 64,
+  "sink": 4,
+  "seed": 0
+}

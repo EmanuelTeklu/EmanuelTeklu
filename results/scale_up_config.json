@@ -1,0 +1,30 @@
+{
+  "models": {
+    "0.5b": "Qwen/Qwen2.5-0.5B-Instruct",
+    "1.5b": "Qwen/Qwen2.5-1.5B-Instruct",
+    "3b": "Qwen/Qwen2.5-3B-Instruct"
+  },
+  "contexts": [
+    8192,
+    16384,
+    32768
+  ],
+  "capture_note": "Uses eager_attention_forward monkeypatch; eager attention materializes [n_heads, T, T] scores. At T=32768 that is ~1.1G entries per head per layer in fp32 for the score matrix during capture \u2014 capture ONE layer at a time or use bf16 + chunked last-token-only logits to stay in memory.",
+  "recommended_hardware": {
+    "1.5b@8k": "1x A10/24GB or better; CPU possible but slow",
+    "1.5b@32k": "1x A100/40GB (chunk capture)",
+    "3b@32k": "1x A100/80GB (chunk capture)"
+  },
+  "decode_query_only": true,
+  "commands": {
+    "capture+experiments": "python run_experiments.py --model {model} --max-tokens {ctx}",
+    "build_dataset": "python build_dataset.py   # edit MODEL_DEFAULT/max_tokens or parameterize; uses capture_qkv.load_model",
+    "classifier": "python classifier.py",
+    "report": "python report.py"
+  },
+  "code_changes_needed_for_long_ctx": [
+    "capture_qkv.capture_prompt: add last-token-only logit path (avoid full TxT scores) \u2014 compute q_last @ K^T directly instead of relying on the captured attn matrix; the monkeypatch already keeps q,k,v so this is a post-hoc slice.",
+    "build longer prompts: extend _filler() / add real long documents to reach 8k-32k tokens.",
+    "run on CUDA: load_model already honors GPU via torch; set dtype=bf16."
+  ]
+}
