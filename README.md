@@ -97,6 +97,28 @@ python prefix_reuse_probe.py        # Probe 1
 python mla_comparison.py            # Probe 2
 ```
 
+### Realizability stack — can block routing + smart risk allocation fix it?
+
+The hardware-realizability question, answered ([`results/NEXT_STACK_SUMMARY.md`](results/NEXT_STACK_SUMMARY.md)):
+
+| # | Experiment | Verdict | Headline |
+|---|---|---|---|
+| 1 | Block-oracle upper bound ([report](results/BLOCK_ORACLE_REPORT.md)) | PARK | block-16 retains **26%** of token gain; 50× median but **2.3× under safe gating** |
+| 2 | Locality-regularized routing ([report](results/LOCALITY_ROUTER_REPORT.md)) | PARK | cheap block routers 10–51× at *median* but **~1× at ≤5% failure** |
+| 3 | Smarter adaptive risk ([report](results/ADAPTIVE_RISK_REPORT.md)) | KEEP (token) / KILL (block) | token expected-cost **6.4×** (fixes naive cascade); block collapses |
+| 4 | Calibration minimization ([report](results/CALIBRATION_MIN_REPORT.md)) | KEEP | **~500 random cases → 95%**; active ≠ better |
+| A | Prefix reuse v2 ([report](results/PREFIX_REUSE_REPORT.md)) | KEEP | canonicalization **0.015→0.875** hit, **5.8×** |
+| B | MLA latent-KV stack ([report](results/MLA_STACK_REPORT.md)) | KEEP | latent **preserves** sparse structure (rank-corr 0.98 @4×) |
+
+**Decisive finding:** the three requirements — GPU-friendly *blocks*, a *cheap*
+router, and *safe* ≤5% failure — don't co-exist. Token-oracle selective = 6.4×
+(but GPU-hostile); **block-oracle** selective = 2.3× (block tax ~3×); **cheap
+block router** selective = ~1× (router tax). The block-oracle ceiling (2.3×) is
+**already below the 4× bar**, so no cheap block router can clear it on this model
+class. **Do not build a Triton kernel.** The shippable wins are the parallel
+branches: **prefix reuse** for agents (5.8×, no kernel) and **MLA/latent-KV** for
+MHA/large models (structure-preserving, stacks).
+
 **Bottom line on the thesis.** The *opportunity* is real and large (10–100×
 component read reduction lives in long-context heads). The gap is a cheap,
 robust selector that survives diffuse heads. Next move is **not** a GPU kernel

@@ -1,51 +1,48 @@
-# Prefix / Latent Reuse Economics — Agent Workloads (Probe)
+# Prefix / Latent Reuse — Canonicalization Ablation (Probe A)
 
-> Economics, not measured wall-clock. Token-level **simulated** agent traces; the speedup model is analytic. Motivation: the agent / repeated-prefix regime is where sparse-safe routing transferred *worst*, so reuse is the natural alternative lever there.
+> Simulated token-level agent traces; analytic speedup (economics, not wall-clock). Each session carries several independent prefix-noise sources; each canonicalization transform neutralises one.
 
-## Headline
+## Verdict: **KEEP**
 
-- Simulated traces: 40 sessions × 8 turns. Mean **reusable-prefix fraction = 0.98**.
-- **Exact-match** prefix cache hit rate: **0.48**; **canonicalized** prefix hit rate: **0.88** (canonicalization recovers the sessions whose headers carry formatting noise — a cheap, high-leverage fix).
-- At the measured operating point, end-to-end speedup is **6.5×** (canonical, overhead=0.01) vs **1.9×** (exact).
-- Across the full economics grid, **11/125** points reach 10× and **0/125** reach 100×; the best is 50.2× (reusable_fraction=0.99, hit_rate=0.99, overhead=0.0).
+- Mean reusable-prefix fraction **0.98**.
+- Exact-match hit rate **0.01** → full-canonicalization hit rate **0.88**.
+- Modeled end-to-end speedup (overhead 3%): exact **1.0×** → canonicalized **5.8×**.
+- Under 10% cache invalidation + 3% overhead, still **3.8×**.
+- Rule: KEEP if canonicalization ≥5× modeled speedup; STRONG KEEP ≥10×.
 
-## Speedup at the measured trace operating point
+## Canonicalization ablation (cumulative)
 
-reusable_fraction=0.98
+| stage                   |   hit_rate |   speedup_ov0 |   speedup_ov03 |
+|:------------------------|-----------:|--------------:|---------------:|
+| exact (no canon)        |      0.015 |         1.014 |          1.014 |
+| +strip_volatile_ids     |      0.073 |         1.077 |          1.074 |
+| +versioned_memory       |      0.175 |         1.206 |          1.199 |
+| +normalize_tool_schemas |      0.277 |         1.371 |          1.356 |
+| +sort_tool_definitions  |      0.467 |         1.836 |          1.791 |
+| +stable_doc_hashes      |      0.875 |         6.848 |          5.826 |
 
-**Exact-match cache** (hit=0.48):
+## Invalidation sensitivity (full canonicalization)
 
-|   overhead |   end_to_end_speedup |
-|-----------:|---------------------:|
-|       0    |                1.887 |
-|       0.01 |                1.87  |
-|       0.03 |                1.838 |
-|       0.05 |                1.806 |
-|       0.1  |                1.733 |
+|   invalidation |   overhead |   hit_rate |   speedup |
+|---------------:|-----------:|-----------:|----------:|
+|           0    |       0    |      0.875 |     6.848 |
+|           0    |       0.03 |      0.875 |     5.826 |
+|           0    |       0.1  |      0.875 |     4.321 |
+|           0.05 |       0    |      0.835 |     5.415 |
+|           0.05 |       0.03 |      0.835 |     4.782 |
+|           0.05 |       0.1  |      0.835 |     3.757 |
+|           0.1  |       0    |      0.775 |     4.105 |
+|           0.1  |       0.03 |      0.775 |     3.755 |
+|           0.1  |       0.1  |      0.775 |     3.132 |
+|           0.2  |       0    |      0.677 |     2.948 |
+|           0.2  |       0.03 |      0.677 |     2.785 |
+|           0.2  |       0.1  |      0.677 |     2.467 |
+|           0.3  |       0    |      0.642 |     2.676 |
+|           0.3  |       0.03 |      0.642 |     2.547 |
+|           0.3  |       0.1  |      0.642 |     2.292 |
 
-**Canonical-prefix cache** (hit=0.88):
+## Reading
 
-|   overhead |   end_to_end_speedup |
-|-----------:|---------------------:|
-|       0    |                6.869 |
-|       0.01 |                6.488 |
-|       0.03 |                5.84  |
-|       0.05 |                5.31  |
-|       0.1  |                4.328 |
-
-## When are 10× / 100× possible?
-
-- **10×** requires reusable_fraction ≥ ~0.9 AND hit_rate ≥ ~0.9 with low overhead — realistic for tight agent loops with a big pinned prefix and a warm cache, but not for one-shot/cold requests.
-- **100×** is essentially unreachable by prefix caching alone (saturates around ~50× even at r=h=0.99): the non-reusable unique tail bounds it. Reaching 100× needs *latent* reuse — reusing computed state across *different* requests (shared tool results, canonical sub-dialogues), not just the literal prefix.
-
-## Trace conditions required
-
-| Target | reusable_fraction | hit_rate | extra |
-|---|---|---|---|
-| 10× | ≥0.90 | ≥0.90 | overhead ≤0.03, warm cache |
-| 30× | ≥0.97 | ≥0.95 | canonicalization on, session pinning |
-| 100× | ≥0.99 | ≥0.99 | + cross-request latent reuse (beyond prefix) |
-
-## Verdict
-
-**Serious parallel branch for agent workloads.** For repeated-prefix agents, prefix-cache reuse delivers a cleaner 5–20× than sparse routing does there, and canonicalization is a cheap multiplier. It is orthogonal to and stacks with sparse-safe routing on the *unique* tail. 100× remains an economics claim contingent on cross-request latent reuse and a real trace.
+- The biggest hit-rate recoveries come from `strip_volatile_ids` and `versioned_memory` (the highest-probability noise sources). Schema normalization/sorting add the rest.
+- Speedup is bounded by the *reusable fraction* (≈0.98); even a perfect cache cannot beat 1/(1-r). 100× needs reuse of the *unique tail* too (cross-request latent reuse), not just the prefix.
+- This is the recommended lever for the agent / repeated-prefix regime, which transferred worst for sparse routing.
