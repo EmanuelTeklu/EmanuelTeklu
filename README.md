@@ -119,6 +119,31 @@ class. **Do not build a Triton kernel.** The shippable wins are the parallel
 branches: **prefix reuse** for agents (5.8×, no kernel) and **MLA/latent-KV** for
 MHA/large models (structure-preserving, stacks).
 
+## The pivot: persistent inference state
+
+Sparse attention is no longer the lead product. The work pivots to **persistent
+inference state** ([`results/PERSISTENT_INFERENCE_PIVOT.md`](results/PERSISTENT_INFERENCE_PIVOT.md)):
+
+| Track | Verdict | Result |
+|---|---|---|
+| **A — Prefix/latent reuse product** ([demo](results/PREFIX_PRODUCT_DEMO.md), `src/prefix_cache/`) | **STRONG KEEP — lead product** | canonicalization → KV object store: exact cache **1.0×** → canonical **13.2× TTFT / 3.2× total cost** (hit 0.00→0.96) |
+| **B — MLA / latent-KV** ([report](results/MLA_LARGE_MODEL_REPORT.md), GPT-2 MHA) | **KEEP — lead research** | latent dc=64 = **24× byte reduction** at rel-L2 0.036, **structure perfectly preserved** (rank-corr 1.0); neutral on GQA-small, big on MHA |
+| **C — Sparse-safety as controller** ([report](results/CONTROLLER_REPORT.md)) | **KEEP — supporting** | cheap features predict compress/exact/latent/fallback at held-out AUC **0.89** |
+
+**Why:** sparse block-GPU is capped below the bar even at the oracle (KILL the
+kernel); prefix reuse is shippable now and is a 13× TTFT lever; latent-KV is a
+24× byte win on MHA that *preserves* the structure reuse/control rely on, so they
+stack; the sparse-safety classifier survives as a cheap controller gating
+latent-vs-exact / reuse-vs-recompute. The hardware implication is a
+**content-addressed latent KV-cache tier**, not a sparse-gather chip.
+
+```bash
+cd src
+python prefix_demo.py        # Track A: canonicalization + KV object store demo
+python mla_large.py          # Track B: latent-KV on GPT-2 (MHA)
+python controller.py         # Track C: sparse-safety as control signal
+```
+
 **Bottom line on the thesis.** The *opportunity* is real and large (10–100×
 component read reduction lives in long-context heads). The gap is a cheap,
 robust selector that survives diffuse heads. Next move is **not** a GPU kernel
