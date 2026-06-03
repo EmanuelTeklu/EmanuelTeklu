@@ -1,0 +1,106 @@
+<!-- JaneHive — "Math needs an update" banner with uploading bar.
+     Self-contained: drop into any page, or copy the <style> + markup into your template.
+     The bar auto-animates; to drive it from a real upload, set .progress width
+     (or the --progress var) from your JS as bytes complete. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Math needs an update</title>
+<style>
+  :root { --jh-accent: #4f7cff; }
+
+  .math-update {
+    max-width: 420px;
+    margin: 2rem auto;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.06);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1a1a2e;
+  }
+
+  .math-update__label {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 .75rem;
+  }
+
+  .math-update__label::before {
+    content: "";
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--jh-accent);
+    animation: math-pulse 1.4s ease-in-out infinite;
+  }
+
+  .math-update__bar {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: #eef1f8;
+    overflow: hidden;
+  }
+
+  .math-update__progress {
+    position: absolute;
+    inset: 0;
+    width: var(--progress, 0%);
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--jh-accent), #7aa0ff);
+    transition: width .3s ease;
+    /* Indeterminate shimmer while uploading */
+    animation: math-fill 2.4s ease-in-out infinite;
+  }
+
+  .math-update__pct {
+    margin: .5rem 0 0;
+    font-size: .8rem;
+    color: #6b7280;
+    text-align: right;
+  }
+
+  @keyframes math-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .4; transform: scale(.85); }
+  }
+
+  /* Demo animation: sweeps the bar to simulate an upload in progress.
+     Remove this keyframe + the `animation` line above if you set width from real upload events. */
+  @keyframes math-fill {
+    0%   { width: 8%; }
+    80%  { width: 92%; }
+    100% { width: 8%; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="math-update" role="status" aria-live="polite">
+    <p class="math-update__label">Math needs an update</p>
+    <div class="math-update__bar" aria-label="Update upload progress">
+      <div class="math-update__progress"></div>
+    </div>
+    <p class="math-update__pct">Uploading…</p>
+  </div>
+
+  <!--
+  To wire the bar to a real upload, drop the demo animation and do:
+
+    const bar = document.querySelector('.math-update__progress');
+    const pct = document.querySelector('.math-update__pct');
+    bar.style.animation = 'none';
+    xhr.upload.onprogress = (e) => {
+      const p = Math.round((e.loaded / e.total) * 100);
+      bar.style.width = p + '%';
+      pct.textContent = p + '%';
+    };
+  -->
+
+</body>
+</html>
