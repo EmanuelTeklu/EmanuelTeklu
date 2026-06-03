@@ -44,6 +44,27 @@ coverage, ≥2× long-context read reduction, and crushes thresholding baselines
 but cheap-feature coverage is <50% and the agent regime transfers poorly. Full
 detail: [`results/CLASSIFIER_REPORT.md`](results/CLASSIFIER_REPORT.md).
 
+### Scale-up: does sparse-safe structure strengthen with scale?
+
+Re-ran the classifier across **Qwen2.5-0.5B at 2k–32k** and **1.5B at 4k–16k**,
+using a memory-safe **last-token-only SDPA capture** in bf16
+(`src/capture_lasttok.py`) that avoids materializing the `[heads,T,T]` score
+matrix (0.5B reaches 32k, 1.5B ~16k within 15GB CPU RAM; GPU points for
+1.5B@32k / 3B are wired but not run here).
+
+| Axis | Finding |
+|---|---|
+| **Context length** | **Strengthens.** 0.5B base rate 0.60→**0.78**; held-out-regime coverage peaks **0.60 @16k**; read reduction **2.16× @16k**; oracle read-gain ≥100×; top-16 tokens still hold 67% of mass at 32k |
+| **Context-length transfer** | **Holds** — ≤8k-trained threshold keeps ~0.94 precision on 16k/32k |
+| **Model size** | **Does NOT help** — 1.5B is slightly harder for the cheap classifier than 0.5B at matched context |
+| **Model-size transfer** | **Weak** — a 0.5B-trained threshold collapses to **0.68 precision** on 1.5B (retrain per model) |
+| **Read-reduction ceiling** | Capped ~2.2× by the fixed 10% router budget, *not* by missing structure (oracle ceiling ≥100×) |
+
+Verdict **KEEP** (improving toward STRONG with context, but model-size transfer
+is a PARK signal and read reduction is budget-capped). Detail:
+[`results/SCALE_UP_REPORT.md`](results/SCALE_UP_REPORT.md). Reproduce/extend on
+GPU: `python src/scale_up_prep.py --check`.
+
 **Bottom line on the thesis.** The *opportunity* is real and large (10–100×
 component read reduction lives in long-context heads). The gap is a cheap,
 robust selector that survives diffuse heads. Next move is **not** a GPU kernel

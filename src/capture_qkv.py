@@ -218,6 +218,52 @@ def build_prompts():
     return prompts
 
 
+def build_long_prompts(target_tokens=8192, approx_chars_per_tok=4):
+    """Long-context prompts (~target_tokens) for the scale-up study.
+
+    Regimes kept separable (longdoc / needle / length-shift / agent) so the
+    classifier can be trained/tested per-regime. `target_tokens` controls the
+    filler size; actual T is reported by the capture.
+    """
+    # empirically ~14 tokens/sentence for this filler; overshoot then truncate
+    n_sent = max(20, int(target_tokens / 12) + 40)
+    prompts = []
+
+    doc = _filler(n_sent)
+    prompts.append(dict(name=f"longdoc_{target_tokens}", regime="longdoc", text=(
+        "Read the following report and answer the question at the end.\n\n" + doc +
+        "\n\nQuestion: According to the report, what did the operations team recommend?")))
+
+    needle_key = "The secret authorization code for project Halcyon is 7Q-ZX-4419."
+    # needle at three depths to avoid position bias
+    for depth in (0.15, 0.5, 0.85):
+        f = _filler(n_sent)
+        cut = int(len(f) * depth)
+        nt = f[:cut] + " " + needle_key + " " + f[cut:]
+        prompts.append(dict(name=f"needle_{target_tokens}_d{int(depth*100)}", regime="needle",
+            text=("Find and report the secret code.\n\n" + nt +
+                  "\n\nQuestion: What is the secret authorization code for project Halcyon?")))
+
+    # length-shift: same task, ~half length (tests within-regime length transfer)
+    docs = _filler(max(10, n_sent // 2))
+    prompts.append(dict(name=f"lenshift_{target_tokens}", regime="lenshift", text=(
+        "Summarize the key recommendation in the following report.\n\n" + docs +
+        "\n\nQuestion: What single action does the report most strongly recommend?")))
+
+    tool_schema = (
+        "SYSTEM TOOLS AVAILABLE:\n"
+        "1. search(query: str) -> list[str]: search the knowledge base.\n"
+        "2. fetch(url: str) -> str: fetch a document.\n"
+        "3. calculate(expr: str) -> float: evaluate an arithmetic expression.\n"
+        "4. write_file(path: str, content: str) -> bool: persist a file.\n"
+        "Always think step by step. Use tools only when necessary.\n")
+    reps = max(3, n_sent // 6)
+    prompts.append(dict(name=f"agent_{target_tokens}", regime="agent", text=(
+        tool_schema * reps +
+        "\nUser: Search for the latency report and then calculate 3*47.\nAssistant:")))
+    return prompts
+
+
 if __name__ == "__main__":
     m, t = load_model()
     cap = capture_prompt(m, t, build_prompts()[3]["text"])

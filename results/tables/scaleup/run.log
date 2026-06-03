@@ -1,0 +1,58 @@
+=== 0.5B (Qwen/Qwen2.5-0.5B-Instruct) q_heads=14 ===
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]Loading weights: 100%|██████████| 290/290 [00:00<00:00, 3071.38it/s]
+  0.5B@2048 longdoc  T=  2048 verify=1.8e-03 (6s)
+  0.5B@2048 needle   T=  2048 verify=2.3e-03 (6s)
+  0.5B@2048 lenshift T=  1488 verify=1.9e-03 (4s)
+  0.5B@2048 agent    T=  2048 verify=2.3e-03 (6s)
+  0.5B@4096 longdoc  T=  4096 verify=1.8e-03 (12s)
+  0.5B@4096 needle   T=  4096 verify=1.5e-03 (12s)
+  0.5B@4096 lenshift T=  2655 verify=1.7e-03 (7s)
+  0.5B@4096 agent    T=  4096 verify=1.7e-03 (12s)
+  0.5B@8192 longdoc  T=  8192 verify=1.2e-03 (27s)
+  0.5B@8192 needle   T=  8192 verify=1.5e-03 (26s)
+  0.5B@8192 lenshift T=  4992 verify=1.7e-03 (13s)
+  0.5B@8192 agent    T=  8192 verify=2.1e-03 (27s)
+  0.5B@16384 longdoc  T= 16384 verify=1.7e-03 (58s)
+  0.5B@16384 needle   T= 16384 verify=1.9e-03 (51s)
+  0.5B@16384 lenshift T=  9649 verify=1.7e-03 (27s)
+  0.5B@16384 agent    T= 16384 verify=1.6e-03 (57s)
+  SKIP 0.5B@32768: est mem 32.1GB > 13.0GB
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/dist-packages/transformers/utils/hub.py", line 422, in cached_files
+    hf_hub_download(
+  File "/usr/local/lib/python3.11/dist-packages/huggingface_hub/utils/_validators.py", line 88, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/huggingface_hub/file_download.py", line 1010, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/huggingface_hub/file_download.py", line 1161, in _hf_hub_download_to_cache_dir
+    _raise_on_head_call_error(head_call_error, force_download, local_files_only)
+  File "/usr/local/lib/python3.11/dist-packages/huggingface_hub/file_download.py", line 1787, in _raise_on_head_call_error
+    raise LocalEntryNotFoundError(
+huggingface_hub.errors.LocalEntryNotFoundError: Cannot find the requested files in the disk cache and outgoing traffic has been disabled. To enable hf.co look-ups and downloads online, set 'local_files_only' to False.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/EmanuelTeklu/src/scale_up_run.py", line 351, in <module>
+    run(plan)
+  File "/home/user/EmanuelTeklu/src/scale_up_run.py", line 176, in run
+    cfg = AutoConfig.from_pretrained(hf)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/models/auto/configuration_auto.py", line 374, in from_pretrained
+    config_dict, unused_kwargs = PreTrainedConfig.get_config_dict(pretrained_model_name_or_path, **kwargs)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/configuration_utils.py", line 683, in get_config_dict
+    config_dict, kwargs = cls._get_config_dict(pretrained_model_name_or_path, **kwargs)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/configuration_utils.py", line 738, in _get_config_dict
+    resolved_config_file = cached_file(
+                           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/utils/hub.py", line 278, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/utils/hub.py", line 498, in cached_files
+    raise OSError(
+OSError: We couldn't connect to 'https://huggingface.co' to load the files, and couldn't find them in the cached files.
+Check your internet connection or see how to run the library in offline mode at 'https://huggingface.co/docs/transformers/installation#offline-mode'.

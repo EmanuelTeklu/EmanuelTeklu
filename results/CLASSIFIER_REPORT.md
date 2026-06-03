@@ -2,6 +2,16 @@
 
 **Thesis:** apply sparse attention *selectively*. Predict which (head, query, context) cases are sparse-safe from cheap features, route only those through a cheap sparse router (sink+recent+block-route at a 10% read budget), and fall back to full attention otherwise.
 
+> **Scale-up update (see [`SCALE_UP_REPORT.md`](SCALE_UP_REPORT.md)):** repeated on
+> 0.5B at 2k–32k and 1.5B at 4k–16k with a memory-safe last-token SDPA capture.
+> Sparse-safe structure **strengthens with context length** (0.5B base rate
+> 0.60→0.78; held-out-regime coverage peaks 0.60 @16k; read reduction 2.16× @16k)
+> and **context-length transfer holds** (precision ~0.94 from ≤8k→16k/32k). But it
+> does **not** strengthen with **model size** (1.5B slightly harder), and
+> **model-size transfer is weak** (a 0.5B-trained threshold drops to 0.68 precision
+> on 1.5B — retrain per model). Verdict remains **KEEP** (read reduction capped
+> ~2.2× by the fixed 10% router budget; oracle ceiling ≥100×).
+
 ## Verdict: **KEEP**
 
 - **Beats simple thresholding (KILL-rule check):** single-feature entropy/top-mass thresholds reach **~0% coverage at 95% precision** (AUC≈0.69); the multivariate classifier reaches **40%** (cheap, random) / **32%** (cheap, held-out regime). Decisively better. ✓

@@ -58,14 +58,21 @@ def build_config():
             "classifier": "python classifier.py",
             "report": "python report.py",
         },
-        "code_changes_needed_for_long_ctx": [
-            "capture_qkv.capture_prompt: add last-token-only logit path (avoid full "
-            "TxT scores) — compute q_last @ K^T directly instead of relying on the "
-            "captured attn matrix; the monkeypatch already keeps q,k,v so this is a "
-            "post-hoc slice.",
-            "build longer prompts: extend _filler() / add real long documents to "
-            "reach 8k-32k tokens.",
-            "run on CUDA: load_model already honors GPU via torch; set dtype=bf16.",
+        "code_changes_done": [
+            "capture_lasttok.py: memory-safe last-token-only SDPA capture "
+            "(registers an 'sdpa_capture' attention interface; records only q_last "
+            "+ native K/V, no [heads,T,T] matrix). bfloat16 forward. GQA-correct, "
+            "verified to ~1e-3. 0.5B reaches 32k, 1.5B ~16k within 15GB CPU RAM.",
+            "capture_qkv.build_long_prompts(target_tokens): longdoc/needle/lenshift/"
+            "agent at a target length.",
+            "scale_up_run.py: sweeps models x contexts, builds dataset, trains the "
+            "classifier with grouped splits, writes SCALE_UP_REPORT.md.",
+        ],
+        "remaining_for_gpu": [
+            "run on CUDA: capture_lasttok.load_model honors GPU via torch; bf16 "
+            "default. The SDPA flash/efficient backend on GPU avoids the transient "
+            "score matrix entirely, so 1.5B@32k and 3B@8k-32k become feasible.",
+            "command: python scale_up_run.py --models 1.5B,3B  (on a >=40GB GPU).",
         ],
     }
     os.makedirs(RESULTS, exist_ok=True)

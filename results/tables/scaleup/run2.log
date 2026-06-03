@@ -1,0 +1,25 @@
+=== 0.5B (Qwen/Qwen2.5-0.5B-Instruct) q_heads=14 ===
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]Loading weights: 100%|██████████| 290/290 [00:00<00:00, 3218.87it/s]
+  RESUME 0.5B@2048: loading cached dataset
+  RESUME 0.5B@4096: loading cached dataset
+  RESUME 0.5B@8192: loading cached dataset
+  RESUME 0.5B@16384: loading cached dataset
+  0.5B@32768 longdoc  T= 32768 verify=2.2e-03 (147s)
+  0.5B@32768 needle   T= 32768 verify=1.8e-03 (126s)
+  0.5B@32768 lenshift T= 18983 verify=1.7e-03 (58s)
+  0.5B@32768 agent    T= 32768 verify=2.2e-03 (132s)
+=== 1.5B (Qwen/Qwen2.5-1.5B-Instruct) q_heads=12 ===
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  61%|██████    | 205/338 [00:00<00:00, 2047.08it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 2636.66it/s]
+  1.5B@4096 longdoc  T=  4096 verify=1.3e-03 (23s)
+  1.5B@4096 needle   T=  4096 verify=1.6e-03 (23s)
+  1.5B@4096 lenshift T=  2655 verify=2.3e-03 (17s)
+  1.5B@4096 agent    T=  4096 verify=1.5e-03 (23s)
+  1.5B@8192 longdoc  T=  8192 verify=1.5e-03 (37s)
+  1.5B@8192 needle   T=  8192 verify=1.6e-03 (37s)
+  1.5B@8192 lenshift T=  4992 verify=1.4e-03 (24s)
+  1.5B@8192 agent    T=  8192 verify=1.5e-03 (36s)
+  1.5B@16384 longdoc  T= 16384 verify=1.8e-03 (87s)
+  1.5B@16384 needle   T= 16384 verify=1.6e-03 (83s)
+  1.5B@16384 lenshift T=  9649 verify=1.4e-03 (43s)
+  1.5B@16384 agent    T= 16384 verify=1.7e-03 (90s)
+wrote /home/user/EmanuelTeklu/src/../results/SCALE_UP_REPORT.md | verdict: KEEP
