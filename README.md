@@ -65,6 +65,38 @@ is a PARK signal and read reduction is budget-capped). Detail:
 [`results/SCALE_UP_REPORT.md`](results/SCALE_UP_REPORT.md). Reproduce/extend on
 GPU: `python src/scale_up_prep.py --check`.
 
+### Stacked experiments — the bottleneck moves to hardware-realizability
+
+Three main-stack experiments + two parallel probes ([`results/STACK_SUMMARY.md`](results/STACK_SUMMARY.md)):
+
+| # | Experiment | Verdict | Headline |
+|---|---|---|---|
+| 1 | **Adaptive budget** ([report](results/ADAPTIVE_BUDGET_REPORT.md)) | KEEP | 16k: **7.8×** read reduction @4.7% fail (fixed-10% = 5.6×); 10–24× headroom exists but naive cascade can't hold ≤5% failure when pooled |
+| 2 | **Block locality / hardware** ([report](results/HARDWARE_REALIZABILITY_REPORT.md)) | GPU-HOSTILE | block-util 0.15, **~9× over-read**, cross-head overlap 0.22 → scattered selections, **kernel gate NOT cleared** |
+| 3 | **Per-model calibration** ([report](results/CALIBRATION_REPORT.md)) | KEEP | **~1000 cases recover ~95%** of coverage → weak model transfer is a non-issue |
+| P1 | **Prefix/latent reuse** ([report](results/PREFIX_REUSE_REPORT.md)) | parallel branch (agents) | canonical hit **0.88** vs exact 0.48; 10× needs r,h≥0.9; 100× needs latent reuse |
+| P2 | **MLA / latent-KV** ([report](results/MLA_LATENT_KV_REPORT.md)) | parallel branch (MHA/large) | neutral for GQA-small, **28×** for MHA-70B-like, **stacks to ~62×** with sparse |
+
+**Synthesis:** the read-reduction ceiling was the *fixed budget*, not the
+attention structure (adaptive shows 10–24× headroom). The real blocker is now
+**block locality** — real sparse selections are scattered and gather-bound, so a
+naive Triton kernel would waste 6–19× on padding. **No GPU kernel yet** (gate not
+cleared). Next real-tensor work: locality-regularized routing + smarter cascade
+failure-budget allocation; in parallel, prefix-reuse for agents and MHA→MLA for
+large models.
+
+Reproduce the stack:
+
+```bash
+cd src
+python stack_experiments.py        # memory-safe capture -> budget/overlap datasets
+python adaptive_policy.py           # Exp 1
+python hardware_realizability.py    # Exp 2
+python calibration.py               # Exp 3
+python prefix_reuse_probe.py        # Probe 1
+python mla_comparison.py            # Probe 2
+```
+
 **Bottom line on the thesis.** The *opportunity* is real and large (10–100×
 component read reduction lives in long-context heads). The gap is a cheap,
 robust selector that survives diffuse heads. Next move is **not** a GPU kernel
