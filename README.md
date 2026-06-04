@@ -144,6 +144,39 @@ python mla_large.py          # Track B: latent-KV on GPT-2 (MHA)
 python controller.py         # Track C: sparse-safety as control signal
 ```
 
+## Persistent inference state wedge
+
+Is canonical persistent-state reuse a **real wedge beyond exact prefix caching**?
+Benchmark with **real `past_key_values` tensor reuse** + a false-hit audit
+([`results/REAL_STATE_REUSE_WEDGE_REPORT.md`](results/REAL_STATE_REUSE_WEDGE_REPORT.md),
+`scripts/run_real_state_wedge.py`):
+
+**Verdict: STRONG KEEP.**
+
+- **Real KV reuse (Qwen2.5-0.5B, CPU, actual `past_key_values`):** canonical state
+  reuse = **5.1× wall-clock prefill speedup** (coding 5.46×, research 4.73×) at
+  **3.8e-5** max logit diff (reuse == full forward of the canonical context).
+- **The wedge:** under per-request volatile noise, **exact-prefix cache hit = 0.00**
+  (what vLLM/SGLang/LMCache key on) vs **canonical hit = 0.97** — incremental lift
+  ~0.97 across **all 5 regimes** (coding/legal/research/multitool/memory).
+- **Zero false hits** across 14 adversarial mutation types: every semantic change
+  (tool semantics, param type, doc content, memory version, system policy,
+  doc replace, model/tokenizer) breaks the key; every surface change (volatile IDs,
+  timestamps, tool/JSON order, whitespace, doc metadata) collapses correctly.
+- TTFT savings (modeled) 8.5–11.3× per regime; total-cost savings ~3× (decode
+  isn't reuse-saved). Differentiator: canonical/versioned **state identity computed
+  before tokenization**, so semantically-stable context reuses internal state
+  despite volatile surface differences — exactly where exact/radix caches miss.
+
+Deliverables: `canonicalization_stress.csv`, `real_kv_reuse.csv`,
+`baseline_comparison.csv`, `false_hit_audit.csv`. Source: `src/prefix_cache/`
+(`canonicalize.py`, `kv_reuse.py`, `store.py`, `regimes.py`, `mutations.py`).
+
+```bash
+python scripts/run_real_state_wedge.py           # full (real CPU forwards, ~15 min)
+python scripts/run_real_state_wedge.py --quick   # fast smoke
+```
+
 **Bottom line on the thesis.** The *opportunity* is real and large (10–100×
 component read reduction lives in long-context heads). The gap is a cheap,
 robust selector that survives diffuse heads. Next move is **not** a GPU kernel
